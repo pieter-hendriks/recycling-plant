@@ -1,0 +1,90 @@
+@startuml
+!pragma teoz true
+actor Motor1A as 1A
+actor Motor1B as 1B
+actor Motor1C as 1C
+actor Motor2B as 2B
+actor Motor2C as 2C
+actor Motor2D as 2D
+actor Sensor11 as 11
+actor Sensor12 as 12
+actor Sensor13 as 13
+actor Sensor14 as 14
+actor output as out
+
+activate 1A
+activate 2B
+activate 2C
+activate 2D
+1A -> 1A : R_DRP
+& 2B -> 2B : R_EJT
+& 2C -> 2C : R_SRT
+& 2D -> 2D : R_PRS
+deactivate 1A
+deactivate 2B
+deactivate 2C
+2D -> 11 ++ : 'ready'
+& 2D -> out 
+deactivate 2D
+11 -> 12 ++ : 'next brick'
+deactivate 11
+
+alt valid_color
+	12->1A ++ : 'brick ready'
+	deactivate 12
+	1A -> out : 'brick dropped'
+	& 1A -> 1B
+	& 1A -> 1C
+	1A -> 13 ++ : 'proximity check'
+	deactivate 1A
+	alt insufficient distance
+		13 -> out : 'proximity alert'
+		& 13 -> 1B 
+		& 13 -> 1C 
+		& 13 -> 13 
+		group Wait until area clear
+			13 -> out : 'area clear'
+			& 13 -> 1B
+			& 13 -> 1C 
+		end
+	end
+	13 -> 1B ++ : 'maybe stuck'
+	deactivate 13
+	1B -> 14 ++ : 'no stuck brick'
+	deactivate 1B
+	alt brick is build color
+		14 -> 1B ++ : 'build'
+		1B -> 2D ++ : 'press=[1 or 2]'
+		deactivate 1B
+		alt press=1
+			2D -> out : 'next brick'
+			& 2D -> 11
+		else press=2
+			2D -> out : 'eject'
+			& 2D -> 2B ++
+			deactivate 2D
+			2B -> 11 : 'next brick'
+			& 2B -> out
+			deactivate 2B
+		end
+		
+	else
+		14 -> 14 : 'sort'
+		14 -> 1B ++ : 'sort=[1, 2 or 3]'
+		deactivate 14
+		1B -> 2C ++ : 'sorted'
+		deactivate 1B 
+		2C -> 11 : 'next brick'
+		& 2C -> out
+		deactivate 2C 
+	end
+
+else
+	activate 12
+	12->out : 'incorrect brick'
+	12-> 11 : 'ready'
+	deactivate 12
+end
+
+
+@enduml

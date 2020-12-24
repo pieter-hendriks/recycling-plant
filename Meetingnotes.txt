@@ -1,0 +1,28 @@
+Build the plant
+	Try to run available scratch on lego bricks
+	
+	WouldBeNice(AlSO DO):
+		Replace lego controller with PiStorm
+			Tips:
+				PiStorm uses python - 
+					either use image for pystorm (website) 
+							--> Python 2.7 -> Problem: Multi-Agent Systems is in python 3+
+							--> Would have to migrate image code. 
+							
+							-> There exists a github branch that has started this work. Should look around. 
+					PiStorm has API on raspPi OS, to handle/connect to lego
+					Api not perfect. Might need little hacks here and there. 
+						Sufficient for sensors and actuators.
+
+SYSML model
+	cyberphysical system: Hardware/software combo, e.g. welke software op welke pi
+	Agents e.d. probably
+	Hoe opdeling agent <-> sensor control
+	
+Implementation:
+	Ev3 op pi's zetten
+	Vertaling naar juiste code
+	Zien dat 't werkt
+
+Agents beginnen implementeren (SPADE)
+	Link voor python3 image komt at some point, should make stuff easier. 

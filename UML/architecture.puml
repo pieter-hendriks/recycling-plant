@@ -1,0 +1,91 @@
+@startuml architecture
+skinparam wrapMessageWidth 100
+skinparam wrapWidth 100
+
+object recycling_line <<block>> <<system of interest>>
+object layer1_controller <<block>> <<hardware>>
+object layer2_controller <<block>> <<hardware>>
+
+recycling_line *-- layer1_controller
+recycling_line *-- layer2_controller
+
+object touch_sensor <<block>> <<hardware>>
+touch_sensor : Sensor for detecting user input through touch interface
+layer1_controller o-- touch_sensor : 1
+
+object touch_sensor_agent <<block>> <<software>>
+layer1_controller <|-- touch_sensor_agent : runs on
+touch_sensor_agent ..> touch_sensor : controls
+
+object color_sensor1 <<block>> <<hardware>>
+color_sensor1 : The first color sensor. Filter on allowed brick colors and placement.
+
+object color_sensor1_agent <<block>> <<software>>
+layer1_controller <|-- color_sensor1_agent : runs on
+color_sensor1_agent ..> color_sensor1 : controls
+
+layer1_controller o-- color_sensor1 : 2
+
+object color_sensor2 <<block>> <<hardware>>
+color_sensor2 : Second color sensor. Used to ensure bricks are placed in the correct bucket or used to build, as configured.
+layer1_controller o-- color_sensor2 : 4
+
+object color_sensor2_agent <<block>> <<software>>
+layer1_controller <|-- color_sensor2_agent : runs on
+color_sensor2_agent ..> color_sensor2 : controls
+
+object motor1 <<block>> <<hardware>> 
+object motor1_agent <<block>> <<software>> 
+layer1_controller <|-- motor1_agent : runs on
+motor1_agent ..> motor1 : controls
+
+object motor2 <<block>> <<hardware>>
+object motor2_agent <<block>> <<software>> 
+layer1_controller <|-- motor2_agent : runs on
+motor2_agent ..> motor2 : controls
+
+object motor3 <<block>> <<hardware>>
+object motor3_agent <<block>> <<software>> 
+layer1_controller <|-- motor3_agent : runs on
+motor3_agent ..> motor3 : controls
+
+
+layer1_controller o-- motor1 : A
+layer1_controller o-- motor2 : B
+layer1_controller o-- motor3 : C
+
+
+object motor4_agent <<block>> <<software>> 
+object motor4 <<block>> <<hardware>>
+
+layer2_controller <|-- motor4_agent : runs on
+motor4_agent ..> motor4 : controls
+object motor5_agent <<block>> <<software>> 
+object motor5 <<block>> <<hardware>>
+layer2_controller <|-- motor5_agent : runs on
+motor5_agent ..> motor5 : controls
+object motor6_agent <<block>> <<software>> 
+object motor6 <<block>> <<hardware>>
+layer2_controller <|-- motor6_agent : runs on
+motor6_agent ..> motor6 : controls
+
+layer2_controller o-- motor4 : B
+layer2_controller o-- motor5 : C
+layer2_controller o-- motor6 : D
+
+
+object remote_computer <<block>> <<hardware>>
+object xmpp_server <<block>> <<software>>
+remote_computer <|-- xmpp_server : runs on
+
+object output_agent <<block>> <<software>>
+layer2_controller <|-- output_agent : runs on
+' This could also be run additionally on layer1 controller. 
+' However, probably duplicate outputs would occur.
+' One solution is to show messages from layer1 stuff on layer1 control and same for layer2
+' But seems more trouble than it's worth.
+
+
+layer2_controller <--> xmpp_server : Central messaging system (all agents)
+layer1_controller <--> xmpp_server : Central messaging system (all agents)
+@enduml

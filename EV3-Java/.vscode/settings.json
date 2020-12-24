@@ -1,0 +1,9 @@
+{
+    "python.pythonPath": "e:\\Programs\\Python\\Python3.9\\python.exe",
+    "files.exclude": {
+        "**/.classpath": true,
+        "**/.project": true,
+        "**/.settings": true,
+        "**/.factorypath": true
+    }
+}

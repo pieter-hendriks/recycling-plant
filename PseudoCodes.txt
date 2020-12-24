@@ -1,0 +1,206 @@
+R_PRS:
+    Motor(2, D).on(-2.5 power, 0.3 seconds, brakeAtEnd=True)
+    Motor(2, D).on(8 power)
+    wait(0.3 seconds)
+    waitUntil(Motor(2, D).currentRotationPower() == 0)
+    Motor(2, D).off(brakeAtEnd=True)
+    Motor(2, D).resetRotation()
+    Motor(2, D).off(brakeAtEnd=False)
+
+R_DRP:
+    Motor(1, A).on(8 power)
+    wait(0.5 seconds)
+    waitUntil(Motor(1, A).currentRotationPower() == 0)
+    Motor(1, A).on(50 power, -90 degrees, brakeAtEnd=True)
+    Motor(1, A).resetRotation()
+
+R_EJT:
+    Motor(2, B).on(-8 power)
+    wait(0.3 seconds)
+    waitUntil(Motor(2, B).currentRotationPower() == 0)
+    Motor(2, B).off(brakeAtEnd=True)
+    Motor(2, B).resetRotation()
+    Motor(2, B).off(brakeAtEnd=False)
+
+R_SRT:
+    Motor(2, C).on(-8 power)
+    wait(0.3 seconds)
+    waitUntil(Motor(2, C).currentRotationPower() == 0)
+    Motor(2, C).off(brakeAtEnd=True)
+    Motor(2, C).resetRotation()
+    Motor(2, C).off(brakteAtEnd=False)
+    
+DROP:
+    degValue = -70 - Motor(1, A).currentRotationDegrees()
+    Motor(1, A).on(10 power, 'degValue' degrees, brakeAtEnd=True)
+    degValue = 0 - Motor(1, A).currentRotationDegrees()
+    Motor(1, A).on(20 power, 'degValue' degrees, brakeAtEnd=True)
+
+Shred:
+    Display(grid, 'SHREDDING', clearScreen=True, col=2, row=5, color=False, font=2)
+    Display(grid, 'WASHING', clearScreen=False, col=3, row=7, color=False, font=2)
+    Motor(1, B).resetRotation()
+    Motor(1, C).on(power=70)
+    Motor(1, B).on(power=10)
+
+Barrier:
+    if (ultraSonicSensor(1,3).distance().centimeter() < 20):
+        Display(grid, 'NO TOUCHY!', clearScreen=True, col=1, row=5, color=False, font=2)
+        Motor(1, B).off(brakeAtEnd=True)
+        Motor(1, C).off(brakeAtEnd=True)
+        do
+            Play error alarm soundfile
+        until ultraSonicSensor(1, 3).distance().centimer() > 30
+        // This is SHRED block, minus the reset .resetRotation
+        // Probably better to avoid code repetition
+        Display(grid, 'SHREDDING', clearScreen=True, col=2, row=5, color=False, font=2)
+        Display(grid, 'WASHING', clearScreen=False, col=3, row=7, color=False, font=2)
+        Motor(1, C).on(power=70)
+        Motor(1, B).on(power=10)
+
+Error:
+    wait(0.5 seconds)
+    // true if color in passed list
+    if colorSensor(1, 4).compare([1, 7]):
+        Display(grid, 'COLOR ERROR', clearScreen=True, col=0, row=5,color=False, font=2)
+        Play error alarm soundfile
+        // Waits until user corrects the problem
+        waitUntil(colorSensor(1, 4).compare([2, 4, 5, 6]))
+        stopSound()
+    else:
+        pass
+
+Press(count):
+    i = 0
+    do
+        ++i
+        Motor(2, D).on(-50 power, 1 second, brakeAtEnd=False)
+        degVal = -50 - Motor(2, D).currentRotationDegrees()
+        Motor(2, D).on(20 power, 'degVal' degrees, brakeAtEnd=True)
+    loop until i == count
+    degVal = -20 - Motor(2, D).currentRotationDegrees()
+    Motor(2, D).on(20 power, 'degVal' degrees, brakeAtEnd=True)
+    wait(0.2 seconds)
+    Motor(2, D).off(brakeAtEnd=False)
+
+Eject(count):
+    i = 0
+    do
+        ++i
+        Motor(2, B).on(30 power, 0.6 seconds, brakeAtEnd=True)
+        degVal = 10-Motor(2, B).currentRotationDegrees()
+        Motor(2, B).on(50 power, 'degVal' degrees, brakeAtEnd=True)
+    until i == count
+
+Build:
+    Display(grid, clearScreen=True, col=0, row=5, color=False, font=2)
+    Motor(1, B).on(30 power, 1600 degrees, brakeAtEnd=False)
+    count = count + 1
+    if count == 2:
+        Press(2)
+        Display(grid, 'EJECTING', clearScreen=True, col=0, row=5, color=False, font=2)
+        Eject(2)
+        count = 0
+    else:
+        Press(1)
+Push:
+    degVal = 80 - Motor(2, C).currentRotationDegrees()
+    Motor(2, C).on(40 power, 'degVal' degrees, brakeAtEnd=True)
+    wait(0.3 seconds)
+    degVal = 5 - Motor(2,C).currentRotationDegrees()
+    Motor(2, C).on(40 power, 'degVal' degrees, brakeAtEnd=True)
+    wait(0.2 seconds)
+    Motor(2, C).off(brakeAtEnd=False)
+
+Sort:
+    Display(grid, 'SORTING...', clearScreen=True, col=0, row=5, color=False, font=2)
+    if colorSensor(1, 4).compare('bucket1'):
+        Motor(1, B).on(20 power, 390 degrees, brakeAtEnd=True)
+        Push()
+    else if colorSensor(1, 4).compare('bucket2'):
+        Motor(1, B).on(20 power, 630 degrees, brakeAtEnd=True)
+        Push()
+    else if colorSensor(1, 4).compare('bucket3'):
+        Motor(1, B).on(20 power, 870 degrees, brakeAtEnd=True)
+        Push()
+    else
+        Display(grid, 'Color error', col=0, row=5, color=false,font=2)
+        Play error alarm soundfile
+
+Menu:
+    Display(clearScreen = yes, image('ev3 icon'), x=0, y=0)
+    Display(grid, clear=False, 'PICK', col=0,row=1,font=1)
+    Display(grid, clear=False, 'COLOR', col=0, row=2,font=1)
+    Display('RED', col 10, row 2, color=True, font1)
+    Display('BLUE', col 2, row 6, color=True, font1)
+    Display('WHITE', col 14, row 6, color=True, font1)
+    Display('YELLOW', col 8, row 10, color=True, font1)
+    write('bucket1', 2)
+    write('bucket2', 4)
+    write('bucket3', 6)
+    write('build', 5)
+    Display(grid, 'RED', clear=False, col=0, row=11, color=False, font=1)
+    Loop:
+        switch(brickButton):
+            case LEFT:
+                DISPLAY(grid, 'BLUE', col0 row11, color=False, font=1)
+                bucket1=4
+                bucket2=5
+                bucket3=6
+                build=2
+            case RIGHT:
+                display(grid, 'WHITE', col0, row11, color=False, font=1)
+                bucket1=2
+                bucket2=4
+                bucket3=5
+                build=6
+            case TOP:
+                display(grid, 'RED', col0, row11, color false, font 1)
+                bucket1=2
+                bucket2=4
+                bucket3=6
+                build=5
+            case BOTTOM:
+                display(grid, 'YELLOW', col0, row 11 color false font 1)
+                bucket1=2
+                bucket2=5
+                bucket3=6
+                build=4
+            default:
+                pass
+    // Until a key is pressed, value TBD (== 1 or != 1)
+    until touchSensor(1, 1).state() == 1?
+    
+Global:
+	R_PRS()
+	Play confirm soundfile
+	Loop forever:
+		Menu()
+		if colorSensor(1, 2).compare([2, 4, 5, 6]):
+			# == blue, yellow, red, white
+			Drop()
+			Shred()
+			do: # (until brick arrives)
+				Barrier
+				// if taking too long, try to unstuck a brick
+				if Motor(1, B).currentRotationDegrees() > 1200:
+					Motor(1, B).on(-20 power, 1 second, brakeAtEnd=True)
+					Motor(1, B).resetRotation()
+					Motor(1, B)).on(10 power)
+				else:
+					pass
+				anyBrick = colorSensor(1, 4).compare([1,2,3,4,5,6,7])
+			until anyBrick
+			Motor(1, C).off(brakeAtEnd=False)
+			Motor(1, B).off(brakeAtEnd=True)
+			Error()
+			
+			rightColor = colorSensor(1, 4).compare(['build' (variable)])
+			if rightColor:
+				Build()
+			else:
+				Sort()
+		else:
+			Display(grid, 'DROP ERROR', clear=True, col=1, row=5, color=false, font=2)
+        
+Start { Global, R_DRP, R_EJT, R_SRT };

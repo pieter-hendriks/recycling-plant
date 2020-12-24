@@ -1,0 +1,70 @@
+/'
+USE CASE 1: System operation - safety
+    When an unexpected object is near the system, the system should stop moving until the object is moved away.
+    This ensures no injuries to the user. An alert should be played to notify the user of this.
+
+USE CASE 2: Configurability
+    The blocks are sorted by color, one color is used to build. three others sorted in buckets.
+    Specification in variable, can be selected through menu
+
+USE CASE 3: Stuck brick
+    If a brick is stuck, the system must attempt to move such that the brick gets un-stuck and restarts its progress across the production line
+    
+USE CASE 4: Wrong brick
+    If an incorrectly colored, or misplaced, brick reaches the sort/build process, an error should occur requiring user intervention
+
+USE CASE 5: Power-On Self-Test
+    At startup, all systems must be checked (I think?)
+    Unclear what R_PRS, R_DRP, R_SRT, R_EJT are for.
+        Text is R_PRESS, R_DROP, R_SORT, R_EJECT
+        but unclear what that actually means
+
+USE CASE 6: Incorrect brick drop (onto prod line)
+    If a brick drops onto production line incorrectly, an error must be displayed until it is resolved.
+    This might require user intervention, depending on the cause of the issue.
+    
+'/
+
+@startuml Requirements
+skinparam wrapMessageWidth 100
+skinparam wrapWidth 100
+object use_cases <<requirement>>
+object safety <<requirement>>
+use_cases *-- safety
+
+safety : Ensure the machine does not harm the user.
+
+object safety_stop <<requirement>>
+object safety_restart <<requirement>>
+
+safety *-- safety_stop
+safety *-- safety_restart
+
+safety_stop : When an object is within 20 cm, and the machine is operating, the machine must stop operating and play a proximity alert.
+safety_restart : After an object is detected, system waits until object is  30 cm away before re-start.
+
+object configurability <<requirement>>
+use_cases *-- configurability
+
+configurability : The system must allow the user to select which block color to use for building and which to sort into buckets. 
+
+object brick_stuck <<requirement>>
+use_cases *-- brick_stuck
+
+brick_stuck : When a brick gets stuck on the production line, the system must attempt to get it unstuck automatically.
+
+object wrong_brick <<requirement>>
+use_cases *-- wrong_brick
+
+wrong_brick : If a brick that is colored incorrectly (or is misplaced) is detected when the machine is trying to sort, an error message must be displayed. The user must interfere in order to resolve this problem, so the machine must pause until that has happened.
+
+object startup <<requirement>> 
+use_cases *-- startup
+
+startup : At startup, the machine must run motors on all sections for a while in order to clear the production line. 
+
+object bad_brick_drop <<requirement>>
+
+use_cases *-- bad_brick_drop
+bad_brick_drop : An error must be shown if a brick is dropped onto the production line incorrectly. The machine must not attempt to continue its usual routine when this occurs.
+@enduml

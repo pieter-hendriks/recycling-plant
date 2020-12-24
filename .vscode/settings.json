@@ -1,0 +1,8 @@
+{
+    "python.pythonPath": "venv/bin/python",
+    "java.project.referencedLibraries": {
+        "include": [
+            "EV3-Java/lib/*.jar"
+        ]
+    }
+}

@@ -1,0 +1,32 @@
+startups -> OneShot, no message
+R_PRS = startup, message after = 'ready'
+
+color not ok -> 'incorrect brick'
+color ok-> 'brick ready'
+Drop() -> 'brick dropped'
+stuck -> 'maybe stuck'
+arrival -> 'brick arrived'
+closeby -> 'proximity alert'
+closeclear->'area clear'
+ready to be pushed -> 'brick sorted'
+loop restart (menu done) -> 'next brick'
+inner loop restart (shred done/no brick) -> 'proximity check'
+
+brick unstucked -> 'no stuck brick'
+
+rightcolor -> 'build'
+wrongcolor -> 'sort'
+
+Error:badcolor -> 'color error'
+Error:rightcolor -> 'color correct'
+
+error:color correct -> 'scan sort/build'
+
+sort() bad color -> 'sort color error'
+press(2) done -> 'eject'
+
+With argument:
+	metadata: "parameter": "somename", msgbody = value
+	thread = "1"
+	
+PROGRESS:
