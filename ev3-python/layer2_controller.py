@@ -13,7 +13,6 @@ async def main():
 		MotorAgent2D.createAgent2D(),
 		OutputAgent.createOutputAgent()
 	]
-	time.sleep(10)
 
 	for agent in agents:
 		agent.start()

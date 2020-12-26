@@ -20,7 +20,6 @@ async def main():
 		SensorAgent14.createAgent14(),
 		OutputAgent.createOutputAgent()
 	]
-	time.sleep(10)
 	for agent in agents:
 		agent.start()
 

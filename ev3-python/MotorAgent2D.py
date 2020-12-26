@@ -7,13 +7,14 @@ class MotorAgent2D(MotorAgent):
 		async def run(self): # R_PRS
 			self.agent.port.runSecs(speed=-2.5, secs=0.3, brakeOnCompletion=True)
 			self.agent.port.setSpeed(8)
-			time.sleep(0.3)
+			time.sleep(1)
 			self.agent.port.waitUntilNotBusy()
 			self.agent.port.brake()
 			self.agent.port.waitUntilNotBusy()
 			self.agent.resetRotation()
 			self.agent.port.float()
 			# Send messages signalling end of this routine
+			time.sleep(2)
 			msg = spade.message.Message()
 			msg.to = "output@192.168.1.8"
 			msg.body = "ready"

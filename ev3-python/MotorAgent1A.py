@@ -6,8 +6,12 @@ MotorAgent1AName = "agent1A@192.168.1.8"
 class MotorAgent1A(MotorAgent):
 	class Behaviour_start(OneShotBehaviour):
 		async def run(self): # R_DRP
+			print("Agent1A setting speed to 8")
 			self.agent.port.setSpeed(8)
-			time.sleep(0.5)
+			time.sleep(3)
+			print("Agent1A setting speed to 50")
+			self.agent.port.setSpeed(50)
+			time.sleep(3)
 			self.agent.port.waitUntilNotBusy()
 			self.agent.port.runDegs(degs=-90, speed=50, brakeOnCompletion=True)
 			self.agent.resetRotation()

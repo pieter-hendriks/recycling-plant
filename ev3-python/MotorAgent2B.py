@@ -6,7 +6,7 @@ class MotorAgent2B(MotorAgent):
 	class Behaviour_start(OneShotBehaviour): 
 		async def run(self): # R_EJT
 			self.agent.port.setSpeed(-8)
-			time.sleep(0.3)
+			time.sleep(1)
 			self.agent.port.waitUntilNotBusy()
 			self.agent.port.brake()
 			self.agent.resetRotation()

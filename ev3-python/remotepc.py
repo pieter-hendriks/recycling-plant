@@ -7,7 +7,6 @@ async def main():
 	agents = [
 		RemoteAgent.createRemoteAgent()
 	]
-	time.sleep(5)
 
 	for agent in agents:
 		agent.start()
