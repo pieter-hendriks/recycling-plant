@@ -1,11 +1,11 @@
-import ErrorAgent
+import RemoteAgent
 import time
 from spade import quit_spade
 import asyncio
 
 async def main():
 	agents = [
-		ErrorAgent.createErrorAgent()
+		RemoteAgent.createRemoteAgent()
 	]
 	time.sleep(5)
 
