@@ -50,9 +50,9 @@ class SensorAgent14(SensorAgent):
 
 		async def checkValidColor(self):
 			if self.agent.port.colorSensorEV3() in error_colors:
-				self.invalidColorNotify()
+				await self.invalidColorNotify()
 			else:
-				self.validColorNotify()
+				await self.validColorNotify()
 				
 		async def invalidColorNotify(self):
 			msg = spade.message.Message()
@@ -72,7 +72,7 @@ class SensorAgent14(SensorAgent):
 		async def waitValidColor(self):
 			while self.agent.port.colorSensorEV3() not in valid_colors:
 				time.sleep(0.2)
-			self.validColorNotify()
+			await self.validColorNotify()
 
 		async def sortGetBucketType(self):
 			value = self.agent.port.colorSensorEV3()

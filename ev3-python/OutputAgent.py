@@ -35,8 +35,8 @@ class OutputAgent(MyAgent):
 		async def displayColorChooser(self):
 			pass # Not yetimplemented, see SensorAgent11.py
 		async def displayShredAndWash(self):
-			self.displayShredding()
-			self.displayWashing()
+			await self.displayShredding()
+			await self.displayWashing()
 		async def displayNoTouch(self, clear=True, col=1, row=5):
 			text = [' ' * col, 'NO TOUCHY!']
 			self.__displayText(clear, ''.join(text), row)
