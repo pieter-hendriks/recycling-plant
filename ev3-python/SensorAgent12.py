@@ -13,6 +13,7 @@ class SensorAgent12(SensorAgent):
 
 		async def checkBrickDrop(self):
 			print("checkbrickdrop started!")
+			self.logInfo(f"checkBrickDrop started:\nvalid colors = {valid_colors}\ncolor={self.agent.port.colorSensorEV3()}")
 			if self.agent.port.colorSensorEV3() in valid_colors:
 				msg = spade.message.Message()
 				msg.to = 'agent1A@192.168.1.8'
