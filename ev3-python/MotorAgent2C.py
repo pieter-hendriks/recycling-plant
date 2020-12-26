@@ -9,7 +9,7 @@ class MotorAgent2C(MotorAgent):
 		async def run(self): # R_SRT
 			self.agent.port.setSpeed(-8)
 			time.sleep(0.3)
-			#self.agent.port.waitUntilNotBusy()
+			self.agent.port.waitUntilNotBusy()
 			self.agent.port.brake()
 			self.agent.resetRotation()
 			self.agent.port.float()

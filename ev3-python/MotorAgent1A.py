@@ -8,7 +8,7 @@ class MotorAgent1A(MotorAgent):
 		async def run(self): # R_DRP
 			self.agent.port.setSpeed(8)
 			time.sleep(0.5)
-			#self.agent.port.waitUntilNotBusy() # removed because it causes infinite wait
+			self.agent.port.waitUntilNotBusy()
 			self.agent.port.runDegs(degs=-90, speed=50, brakeOnCompletion=True)
 			self.agent.resetRotation()
 

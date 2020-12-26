@@ -7,7 +7,7 @@ class MotorAgent2B(MotorAgent):
 		async def run(self): # R_EJT
 			self.agent.port.setSpeed(-8)
 			time.sleep(0.3)
-			#self.agent.port.waitUntilNotBusy()
+			self.agent.port.waitUntilNotBusy()
 			self.agent.port.brake()
 			self.agent.resetRotation()
 			self.agent.port.float()
@@ -21,9 +21,12 @@ class MotorAgent2B(MotorAgent):
 		
 		async def eject(self, count=2):
 			for _ in range(count):
+				self.agent.resetRotation()
 				self.agent.port.runSecs(secs=0.6, speed=30, brakeOnCompletion=True)
+				time.sleep(0.6)
 				degs=10-self.agent.readRotation()
-				self.agent.port.runDegs(degs=degs, speed=50, brakeOnCompletion=True)
+				self.agent.port.runDegs(degs=degs, speed=-50, brakeOnCompletion=True)
+				time.sleep(1)
 			msg = spade.message.Message()
 			msg.to = 'agent11@192.168.1.8'
 			msg.body = 'next brick'

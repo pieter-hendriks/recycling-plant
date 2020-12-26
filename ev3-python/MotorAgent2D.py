@@ -8,10 +8,9 @@ class MotorAgent2D(MotorAgent):
 			self.agent.port.runSecs(speed=-2.5, secs=0.3, brakeOnCompletion=True)
 			self.agent.port.setSpeed(8)
 			time.sleep(0.3)
-			#self.agent.port.waitUntilNotBusy()
+			self.agent.port.waitUntilNotBusy()
 			self.agent.port.brake()
-			# God I hope this works
-			#self.agent.port.waitUntilNotBusy()
+			self.agent.port.waitUntilNotBusy()
 			self.agent.resetRotation()
 			self.agent.port.float()
 			# Send messages signalling end of this routine
