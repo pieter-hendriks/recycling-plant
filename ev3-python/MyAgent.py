@@ -20,12 +20,9 @@ class MyAgent(spade.agent.Agent):
 		self.holdConfiguredValue = hold
 
 	async def sleep(self, t):
-		try:
-			await asyncio.wait_for(self.__sleep(t), timeout=t+2)
-		except asyncio.TimeoutError:
-			pass
+		await asyncio.sleep(t) #asyncio.wait_for(self.__sleep(t), timeout=t+2)
 
-	async def __sleep(self, t):
-		time.sleep(t)
-		return 
+	#async def __sleep(self, t):
+	#	time.sleep(t)
+	#	return 
 
