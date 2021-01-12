@@ -54,7 +54,21 @@ In \cite{Chemical}, a multi-agent system is used to simulate and support the man
 
 \section{System Design}
 
-The system is controlled using 6 engines and 4 sensors. We'll briefly discuss each of them in order to be able to easily refer to them later on in the paper. The indexing used to identify each motor or sensor mimics that used in the Lego EV3 brick. The first number is the layer the brick is running on (Lego EV3 bricks can be chained in order to provide multiple ports, allowing more complex robots). The second is a number or letter and identifies the port on the brick, this is a number for sensors and a letter for motors. 
+
+\begin{figure}[htbp]
+\centerline{\includegraphics[width=0.45\textwidth]{images/assembly.jpg}}
+\caption{The assembly line, fully assembled, connected to the PiStorms devices.}
+\label{assemblyFig}
+\end{figure}
+
+In figure \ref{assemblyFig}, the fully assembled system can be seen. The top end of the image shows the in-feed of the assembly line, the bottom end is the building spot at the end of the assembly line. Not all motors and sensors are clearly visible in this picture, though the general idea of what will happen should be clear.
+
+A brick is stopped on the in-feed until a motor moves to drop it on the assembly line. The assembly line will move forward until the brick reaches the color sensor that will determine what to do with it. While the brick moves, the motor over the assembly line will perform the shredding and washing procedure (name taken from original implementation). 
+
+After the second color sensor determines what should be done with the brick, the assembly line moves the brick into the new position and either the arm will push it into one of the buckets (seen on the left, just past the middle) or drop it onto the building platform. 
+
+\subsection{Sensors and Motors}
+The system is controlled using six motors and four sensors. We'll briefly discuss each of them in order to be able to easily refer to them later on in the paper. The indexing used to identify each motor or sensor mimics that used in the Lego EV3 brick. The first number is the layer the brick is running on (Lego EV3 bricks can be chained in order to provide multiple ports, allowing more complex robots). The second is a number or letter and identifies the port on the brick, this is a number for sensors and a letter for motors. 
 \begin{itemize}
 \item[1, 1] A touch sensor, that is used in order to start the system. The line operates one brick at a time and this sensor must be pressed in order to work on the next brick whenever the previous one is finished.
 \item[1, 2] A color sensor over the in-feed. It detects whether the feed has a brick ready to be dropped. It detects the color after sensor(1, 1) is pressed. It identifies whether a brick is ready to drop onto the assembly line and what color it is.
@@ -68,6 +82,8 @@ The system is controlled using 6 engines and 4 sensors. We'll briefly discuss ea
 \item[2, C] This motor pushes bricks into the sorting bins when they are not the currently configured building color.
 \item[2, D] This motor handles the building process when correctly coloured bricks arrive at the building position. 
 \end{itemize}
+
+Now, let's look at the system's function again, but with more focus on the sensors and motors, rather than the result. 
 
 A happy-path run of the system would then be as follows: sensor(1, 1) touched, sensor(1, 2) detects correct color, motor(1, A) drops brick onto line, motor(1, B) moves brick forward, motor(1, C) shreds and cleans, sensor(1, 3) verifies nothing in close proximity, sensor(1, 4) detects the brick is the color we want to build with, motor(2, C) remains still because the brick must remain on the assembly line, the brick arrives in the building position at the end of the line, motor(2, D) uses it to build and then motor(2, B) ejects the final product. 
 Any time a sensor is involved, one (or more) alternative paths occur depending on the value the sensor scans. Based on those values, the system stops moving (if proximity is detected), requires human intervention (if sensor(1, 4) detects a bad color, sorts into one of the bins (if sensor(1, 4) detects one of the three other colors). The assembly line will also reverse in order to attempt to fix a brick that has gotten stuck if the assembly line motor detects that the brick should have arrived, but the system hasn't handled it yet.
@@ -95,7 +111,9 @@ In the case the controllers each controlled their own section of the assembly li
 \label{architecture}
 \end{figure}
 
-In figure \ref{architecture} we model, in detail, what the function of each agent is and what hardware they run on. This will not be further addressed in the text - knowing each motor and sensor is controlled by its own agent should be sufficient. 
+In figure \ref{architecture} we model, in detail, what the function of each agent is and what hardware they run on. Each agent controls its own sensor/motor. They behave in such a way as to closely mimic the behaviour achieved through the Lego program that comes with the assembly of this system. 
+
+The functional implementation relies fully on the message exchange between the agents. If there is no communication, nothing will happen. At system initialization, a few motors run such that they move into a starting position. Once those movements are complete, all movement will cease until messages between the agents are exchanged.
 
 \subsubsection{Communication}
 
@@ -108,6 +126,10 @@ The messages exchanged between the agents will be shown using another SysML\cite
 \caption{The SysML\cite{sysml} model of the agent message exchange}
 \label{comms}
 \end{figure}
+
+The agents' behaviour associated with each message is a lot to describe and so will not be addressed in detail. Essentially, a single color is selected to build with at the end of the assembly line. Any other color brick (out of the four accepted colours) will be sorted into one of the three buckets along the second half of the assembly line.
+
+In order to achieve this, the agents communicate with the messages in the diagram and indicate to eachother what the next expected behaviour is. An alternative implementation would be to simply share the measurements from one agent to another. However, since the measuring agent presumably has better context to interpret its own results, it was decided that it would make more sense to interpret the results on the measuring agent's side and simply craft the messages such that they clearly indicate what the system will do next.
 
 \subsubsection{Remote Control}
 
@@ -138,7 +160,9 @@ During the development of this system, we faced a few challenges. Some of them w
 \subsubsection{Incorrect sensor values}
 One of the main problems was that the values sensors record when the measuring function (in the mindsensors API is called) doesn't consistently match the value they should actually be measuring. This also applies to the motors, when reading their rotation. In our implementation, we mostly avoided this (though not fully) by performing several, sequential measurement and taking either the average or the mode (depending on sensor type) of the results in order to determine what the result should be. 
 
-This implementation works for the most part, though occasionally, errors will still pop up. This is definitely a very hacky fix and there must be a prettier way of handling things (presumably through improvement of the API). But given the limited documentation for interaction directly with the hardware, that did not seem like feasible implementation so this was chosen instead. 
+This implementation works for the most part, though occasionally, errors will still pop up. This workaround is rather hacky and doesn't not fully eliminate the errors. They are mitigated sufficiently to operate the system as a proof of concept for the design of the multi-agent system, though. 
+
+The errors appear to originate in the Lego hardware (or reading out incorrect data by the mindsensors API. The functions reading that data are one-liners that seem to directly read a memory location from the Lego devices. Modifying these functions in an attempt to correct the behaviour was not considered feasible since documentation aobut the interaction with those devices was not available to the authors of this paper. 
 
 \subsubsection{Missing functionality in API}
 The mindsensors API as provided did not include a way for us to reset the rotation for a motor. This is a function that is required in order to correctly turn the motors in this system though, so this posed a bit of a problem. An initial solution was to simply implement this functionality on the agent side. We'd record the current rotation in a variable whenever the function is called, then subtract that value from the actual rotation whenever the rotation is read.
@@ -147,11 +171,15 @@ That worked for a time, but this later caused a few instances where one of the m
 
 We then modified the API a little bit - an old function \emph{resPos()} was mentioned in the files, but commented out. We re-implemented it, using the implementation of the \emph{pos()} function to determine what a sensible implementation of this function would be. In order to correctly implement it, we also needed to add a few extra implementations further in the backend, directly writing the memory. For these, similar functions were also available and used as examples in order to implement correctly.
 
+This challenge taught us that it is often worthwhile to spend a little effort digging into a problem, rather than immediately trying to avoid it. Our initial problem-avoidance strategy caused issues down the line that could have been avoided if we had immediately implemented the API function, which did not turn out to be a very complicated development.
+
 \subsubsection{Simultaneity}
 
 While the SPADE API, combined with the Python3 async/await syntax provides some level of simultaneity, it is important to realise that during any synchronous call, the function cannot be interrupted (i.e., an asynchronous function calling e.g. \emph{time.sleep(5)} cannot be interrupted as\emph{time.sleep(5)} is a synchronous call). This means that one of the agent's behaviours waiting would also block the other behaviours on that agent, which turned out to be a problem in a few cases.
 
-An implementation of an asynchronous waiting function corrected this. 
+An implementation of an asynchronous waiting function corrected this. The implementation is rather simply achieved through the Python asyncio wait_for function. 
+
+This challenge served as a reminder that even though asynchronous code often seems simple to follow, there are always issues lurking and it quickly becomes hard to debug. Issues are not immediately obvious and tend to be intermittent due to the nature of asynchronous behaviour.
 
 \subsubsection{Remote control}
 
@@ -159,7 +187,9 @@ Since the implementation is a recycling plant, having to manually interact with 
 
 The control agent allows arbitrary function execution (e.g. run a certain motor for 5 seconds). It also allows the user to force a sensor the return a certain value (e.g. make a color sensor return the value for red next time it is polled). This allows the user to manipulate what happens to the brick on the assembly line very precisely. 
 
-Of course, the front-end is unwieldy currently, making this infeasible. However, a more elegant implementation could definitely improve that sufficiently to make precise control from a remote computer feasible. 
+Of course, the front-end is unwieldy currently, making this infeasible. However, a more elegant implementation could definitely improve that sufficiently to make precise control from a remote computer feasible. The only possibility to use the remote control feature is command line interaction with a remote control agent. A future implementation might implement a graphical front-end to interact with the system, allowing the precision mentioned above.
+
+This challenge is the result of an addition to the system, that was not originally present. This challenge reinforced the knowledge that the system's functionality is not the only concern. The user experience improvement the remote control allows is massive and greatly simplifies showing any behaviour desired. Rather than having to ensure all sensors measure correct values at correct times in order to demonstrate something, these can simply be controlled deterministically. 
 
 \section{Conclusion}
 
