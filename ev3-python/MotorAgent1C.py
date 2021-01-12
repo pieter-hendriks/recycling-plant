@@ -1,7 +1,7 @@
 from MotorAgent import MotorAgent
 import spade
 from MyBehaviour import CyclicBehaviour
-
+import agentnames 
 class MotorAgent1C(MotorAgent):
 	class Behaviour(CyclicBehaviour):
 		def __init__(self, *args, **kwargs):
@@ -18,16 +18,19 @@ class MotorAgent1C(MotorAgent):
 			self.createMasterTemplate()
 	
 		async def brickArrival(self):
-			self.agent.port.hold()
+			await self.logInfo("Agent1C::brickArrival -> port.hold()")
+			self.agent.port.brake()
+			self.agent.port.float()
 
 		async def shred(self):
-			self.agent.port.setSpeed(70)
+			await self.logInfo("Agent1C::shred -> setSpeed(70)")
+			self.agent.port.setSpeed(20)
 
 		async def barrierOn(self):
 			self.agent.port.float()
 		
 		async def barrierOff(self):
-			self.agent.port.setSpeed(70)
+			self.agent.port.setSpeed(20)
 
 	def __init__(self, *args, **kwargs):
 		super().__init__(*args, **kwargs)
@@ -36,4 +39,4 @@ class MotorAgent1C(MotorAgent):
 
 
 def createAgent1C():
-	return MotorAgent1C("agent1C@192.168.1.8", "agent1C")
+	return MotorAgent1C(agentnames.agent1C, "agent1C")

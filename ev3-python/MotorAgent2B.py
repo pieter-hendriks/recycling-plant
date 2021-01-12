@@ -2,15 +2,17 @@ from MotorAgent import MotorAgent
 import time
 import spade
 from MyBehaviour import CyclicBehaviour, OneShotBehaviour
+import agentnames 
+
 class MotorAgent2B(MotorAgent):
 	class Behaviour_start(OneShotBehaviour): 
 		async def run(self): # R_EJT
-			self.agent.port.setSpeed(-8)
-			time.sleep(1)
-			self.agent.port.waitUntilNotBusy()
-			self.agent.port.brake()
+			await self.logInfo("agent2B::run start")
+			await self.agent.runSecs(speed=10, secs=1, brakeOnCompletion=True)
+			await self.agent.runSecs(speed=40, secs=0.5, brakeOnCompletion=True)
 			self.agent.resetRotation()
-			self.agent.port.float()
+			await self.logInfo("agent2B::run end")
+
 	class Behaviour(CyclicBehaviour):
 		def __init__(self, *args, **kwargs):
 			super().__init__(*args, **kwargs)
@@ -20,21 +22,25 @@ class MotorAgent2B(MotorAgent):
 			self.createMasterTemplate()
 		
 		async def eject(self, count=2):
+			await self.logInfo("agent2B::eject start")
 			for _ in range(count):
-				self.agent.resetRotation()
-				self.agent.port.runSecs(secs=0.6, speed=30, brakeOnCompletion=True)
-				time.sleep(0.6)
+				await self.agent.runSecs(secs=0.6, speed=-30, brakeOnCompletion=True)
+				await self.agent.sleep(0.2)
+				self.agent.port.float()
 				degs=10-self.agent.readRotation()
-				self.agent.port.runDegs(degs=degs, speed=-50, brakeOnCompletion=True)
-				time.sleep(1)
+				await self.agent.runDegs(degs=degs, speed=40, brakeOnCompletion=True)
+				self.agent.resetRotation()
+				await self.agent.sleep(1)
+				self.agent.port.float()
 			msg = spade.message.Message()
-			msg.to = 'agent11@192.168.1.8'
-			msg.body = 'next brick'
+			msg.to = agentnames.agent11
+			msg.body = 'ready'
 			await self.send(msg)
 			msg = spade.message.Message()
-			msg.to = 'out@192.168.1.8'
-			msg.body = 'next brick'
+			msg.to = agentnames.output
+			msg.body = 'ready'
 			await self.send(msg)
+			await self.logInfo("agent2B::eject end")
 
 	def __init__(self, *args, **kwargs):
 		# Forward all arguments to super since we don't really use any ourselves.
@@ -46,4 +52,4 @@ class MotorAgent2B(MotorAgent):
 	
 
 def createAgent2B():
-	return MotorAgent2B("agent2B@192.168.1.8", "agent2B")
+	return MotorAgent2B(agentnames.agent2B, "agent2B")

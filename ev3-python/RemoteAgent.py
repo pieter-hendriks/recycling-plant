@@ -1,47 +1,34 @@
 import spade
-
+import agentnames
 class RemoteAgent(spade.agent.Agent):
 	class LogBehaviour(spade.behaviour.CyclicBehaviour):
 		def __init__(self, *args, **kwargs):
 			super().__init__(*args, **kwargs)
-
 		async def run(self):
 			msg = await self.receive(timeout = 5)
 			if msg:
-				print(f"Error encountered by an agent:\n{msg.body}")
-				print("Remote agent waiting for input: ")
+				handled = False
+				if msg.metadata and "type" in msg.metadata:
+					if msg.metadata["type"] == "error":
+						print(f"Error encountered by {msg.sender}:\n{msg.body}")
+						handled = True
+					elif msg.metadata["type"] == "info":
+						print(f"Information from {msg.sender}:\n{msg.body}")
+						handled = True
+					elif msg.metadata["type"] == "unprocessed":
+						print(f"Unprocessed message encountered by {msg.sender}:\n{msg.body}")
+						handled = True
+				if not handled:
+					print(f"Message received but not handled:\n{msg}")
 			else:
 				pass # No errors logged
-	
-	class InputBehaviour(spade.behaviour.CyclicBehaviour):
-		def __init__(self, *args, **kwargs):
-			super().__init__(*args, **kwargs)
-
-		async def run(self):
-			userInput = input("Remote agent waiting for input: ")
-			if userInput == 'reset':
-				pass
-			elif userInput == 'stop':
-				pass
-			elif userInput == 'build1':
-				pass
-			elif userInput == 'build2':
-				pass
-			elif userInput == 'build3':
-				pass
-			elif userInput == 'build4':
-				pass
-			else:
-				print(f"Unfortunately, no behaviour is programmed for the command '{userInput}'.")
-				print("Please ensure you're entering a valid command.")
-			
 	
 	def __init__(self, *args, **kwargs):
 		super().__init__(*args, **kwargs)
 	
 	async def setup(self):
 		self.add_behaviour(self.LogBehaviour())
-		self.add_behaviour(self.InputBehaviour())
+		print("Remote agent setup complete")
 
 def createRemoteAgent():
-	return RemoteAgent("error@192.168.1.8", "error")
+	return RemoteAgent(agentnames.error, "error")

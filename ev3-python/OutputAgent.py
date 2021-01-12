@@ -2,6 +2,8 @@ from MyAgent import MyAgent
 import subprocess
 from MyBehaviour import CyclicBehaviour
 import spade
+import agentnames
+from PiStorms import PiStorms
 class OutputAgent(MyAgent):
 	class Behaviour(CyclicBehaviour):
 		def __init__(self, *args, **kwargs):
@@ -42,8 +44,8 @@ class OutputAgent(MyAgent):
 			self.__displayText(clear, ''.join(text), row)
 
 		async def sortColorErrorMessageAndSound(self):
-			self.displayColorError()
-			self.playColorErrorSound()
+			await self.displayColorError()
+			await self.playColorErrorSound()
 
 		async def displayShredding(self, clear=True, col=2, row=5):
 			text = [' ' * col, 'SHREDDING']
@@ -73,7 +75,7 @@ class OutputAgent(MyAgent):
 			text = [' ' * col, 'DROP ERROR']
 			self.__displayText(clear, ''.join(text), row)
 
-		async def __displayText(self, clear, text, line):
+		def __displayText(self, clear, text, line):
 			if clear:
 				self.agent.psm.screen.clearScreen(True)
 			self.agent.psm.screen.termPrintAt(line, text)
@@ -126,6 +128,7 @@ class OutputAgent(MyAgent):
 	
 	def __init__(self, *args, **kwargs):
 		super().__init__(*args, **kwargs)
+		self.psm = PiStorms()
 		self.touchErrorProcess = None
 		self.colorErrorProcess = None
 		self.add_behaviour(self.Behaviour())
@@ -134,4 +137,4 @@ class OutputAgent(MyAgent):
 	
 
 def createOutputAgent():
-	return OutputAgent("output@192.168.1.8", "output")
+	return OutputAgent(agentnames.output, "output")

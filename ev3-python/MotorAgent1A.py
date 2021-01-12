@@ -2,19 +2,22 @@ from MotorAgent import MotorAgent
 import time
 import spade
 from MyBehaviour import OneShotBehaviour, CyclicBehaviour
-MotorAgent1AName = "agent1A@192.168.1.8"
+import agentnames
+
 class MotorAgent1A(MotorAgent):
 	class Behaviour_start(OneShotBehaviour):
 		async def run(self): # R_DRP
-			print("Agent1A setting speed to 8")
-			self.agent.port.setSpeed(8)
-			time.sleep(3)
-			print("Agent1A setting speed to 50")
-			self.agent.port.setSpeed(50)
-			time.sleep(3)
-			self.agent.port.waitUntilNotBusy()
-			self.agent.port.runDegs(degs=-90, speed=50, brakeOnCompletion=True)
+			self.agent.port.setSpeed(-8)
+			await self.agent.sleep(0.1)
+			await self.logInfo("agent1A::run start: Rotate to blocking spot, bottom orientation")
+			await self.agent.runDegs(degs=360, speed=-10, brakeOnCompletion=True)
+			# Do one rotation, should block on blocking spot and rest of the calls should work fine. 
+			# self.agent.port.setSpeed(50)
+			await self.logInfo("agent1A::run progress: Rotate back up a bit, ensure we're ready to push up the starting block")
+			await self.agent.runDegs(degs=135, speed=20, brakeOnCompletion=True)
+			await self.agent.sleep(0.1)
 			self.agent.resetRotation()
+			await self.logInfo("agent1A::run end")
 
 	class Behaviour(CyclicBehaviour):
 		def __init__(self, *args, **kwargs):
@@ -24,32 +27,39 @@ class MotorAgent1A(MotorAgent):
 			self.createMasterTemplate()
 
 		async def drop(self):
-			degrees = -70 - self.agent.readRotation()
-			self.agent.port.runDegs(degs=degrees, speed=10, brakeOnCompletion=True)
-			degrees = -1 * self.agent.readRotation()
-			self.agent.port.runDegs(degs=degrees, speed=20, brakeOnCompletion=True)
+			await self.logInfo("agent1A::drop start")
+			degs = 90 + self.agent.readRotation()
+			if abs(degs) > 200:
+				degs = 90 # Bandaid fix because it goes nuts sometimes
+			await self.logInfo(f"agent1A motor running for 90 degrees, at speed 20")
+			await self.agent.runDegs(degs=degs, speed=20, brakeOnCompletion=True)
+			await self.logInfo(f"agent1A motor running for -90 degrees, at speed -20")
+			await self.agent.runDegs(degs=-90, speed=-20, brakeOnCompletion=True)
+			self.agent.resetRotation()
+			self.agent.port.float()
+			
+			await self.logInfo("Agent1A notifying everyone for brick drop")
 			# Send to everyone in Shred()
 			msg = spade.message.Message()
-			msg.to = 'output@192.168.1.8'
+			msg.to = agentnames.output
 			msg.body = 'brick dropped'
 			await self.send(msg)
 			msg = spade.message.Message()
-			msg.to = 'agent1B@192.168.1.8'
+			msg.to = agentnames.agent1B
 			msg.body = 'brick dropped'
 			await self.send(msg)
 			msg = spade.message.Message()
-			msg.to = 'agent1C@192.168.1.8'
+			msg.to = agentnames.agent1C
 			msg.body = 'brick dropped'
 			await self.send(msg)
-			# Brief pause to maintain correct order
-			# Probably not necessary, but eh
-			time.sleep(0.1)
+			await self.logInfo("Agent1A notifying 13 for proximity check")
 			# And continue onwards in the loop. 
 			# Barrier might pause shred, but will resume it afterwards. 
 			msg = spade.message.Message()
-			msg.to = 'agent13@192.168.1.8'
+			msg.to = agentnames.agent13
 			msg.body = 'proximity check'
 			await self.send(msg)
+			await self.logInfo("agent1A::drop end")
 
 		
 	def __init__(self, *args, **kwargs):
@@ -60,27 +70,5 @@ class MotorAgent1A(MotorAgent):
 
  
 def createAgent1A():
-	agent = MotorAgent1A(MotorAgent1AName, "agent1A")
+	agent = MotorAgent1A(agentnames.agent1A, "agent1A")
 	return agent
-
-# from PiStorms import PiStorms
-# from spade import agent
-# from spade import quit_spade
-# import time
-
-# class DummyAgent(agent.Agent):
-#     async def setup(self):
-#         print("Hello World! I'm agent {}".format(str(self.jid)))
-#         psm = PiStorms()
-#         psm.screen.termPrintln("EV3 Motor and US Sensor test")
-#         psm.BAM1.runDegs(360, 75, True, False)
-#         dist = psm.BAS1.distanceUSEV3()
-#         print(dist)
-#         psm.screen.clearScreen()
-#         psm.screen.Text(str(drawAutodist), 35, 200, fill=(255, 255, 255), size = 18)
-			
-# dummy = DummyAgent("challenger@jabber.de", "123456")
-# dummy.start()
-# time.sleep(10)
-# dummy.stop()
-# quit_spade()

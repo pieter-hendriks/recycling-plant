@@ -23,10 +23,11 @@ activate 2D
 deactivate 1A
 deactivate 2B
 deactivate 2C
-2D -> 11 ++ : 'ready'
-& 2D -> out 
+2D -> 11 ++ 
+& 2D -> out : 'ready'
 deactivate 2D
-11 -> 12 ++ : 'next brick'
+11 -> 12 ++ 
+& 11 -> out : 'next brick'
 deactivate 11
 
 alt valid_color
@@ -57,13 +58,13 @@ alt valid_color
 		1B -> 2D ++ : 'press=[1 or 2]'
 		deactivate 1B
 		alt press=1
-			2D -> out : 'next brick'
+			2D -> out : 'ready'
 			& 2D -> 11
 		else press=2
 			2D -> out : 'eject'
 			& 2D -> 2B ++
 			deactivate 2D
-			2B -> 11 : 'next brick'
+			2B -> 11 : 'ready'
 			& 2B -> out
 			deactivate 2B
 		end
@@ -74,7 +75,7 @@ alt valid_color
 		deactivate 14
 		1B -> 2C ++ : 'sorted'
 		deactivate 1B 
-		2C -> 11 : 'next brick'
+		2C -> 11 : 'ready'
 		& 2C -> out
 		deactivate 2C 
 	end

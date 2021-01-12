@@ -1,17 +1,13 @@
 TODO:
-  Ensure sound file paths in outputagent are correct
-  Ensure image file paths in outputagent are correct
-        ==> All file paths essentially
-
 
 POST PROJECT CLEANUP:
 UNINSTALL NATIONAL INSTRUMENTS SOFTWARE / ev3 / all the other crap
 uninstall osfmount
 
 
-linux: uninstall ejabberd
+linux: uninstall ejabberd/prosody
 
-	Remove /usr/locla/bin/
+	Remove /usr/local/bin/
 		MSDriver.py
 		MSBrowser.py
 		psm_shutdown

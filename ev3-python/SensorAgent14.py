@@ -2,6 +2,7 @@ from SensorAgent import SensorAgent, valid_colors, error_colors, any_brick, defa
 import time
 from MyBehaviour import CyclicBehaviour
 import spade
+import agentnames
 
 orders = []
 for i in range(4):
@@ -28,54 +29,72 @@ class SensorAgent14(SensorAgent):
 			self.createMasterTemplate()
 
 		async def updateBrickOrder(self, index):
+			await self.logInfo("agent14 updated brick color")
 			self.agent.buckets = orders[index][:3]
 			self.agent.build = orders[index][3]
 
 		async def checkBrickBuildColor(self):
+			await self.logInfo("agent14::checkBrickBuildColor start")
 			msg = spade.message.Message()
-			msg.to = 'output@192.168.1.8'
-			if self.agent.port.colorSensorEV3() == self.agent.build:
+			measuredColor = await self.agent.measureColor()
+			if measuredColor == self.agent.build:
 				msg.body = 'build'
 				message = spade.message.Message()
-				message.to = 'agent1B@192.168.1.8'
+				message.to = agentnames.agent1B
 				message.body = 'build'
 				await self.send(message)
 			else:
 				msg.body = 'sort'
 				message = spade.message.Message()
-				message.to = 'agent14@192.168.1.8'
+				message.to = agentnames.agent14
 				message.body = 'sort'
 				await self.send(message)
+			msg.to = agentnames.output
 			await self.send(msg)
+			await self.logInfo("agent14::checkBrickBuildColor end")
 
 		async def checkValidColor(self):
-			if self.agent.port.colorSensorEV3() in error_colors:
+			await self.logInfo("agent14::checkValidColor start")
+			measuredColor = await self.agent.measureColor()
+			if measuredColor in error_colors:
 				await self.invalidColorNotify()
 			else:
 				await self.validColorNotify()
+			await self.logInfo("agent14::checkValidColor end")
 				
 		async def invalidColorNotify(self):
+			await self.logInfo("agent14::invalidcolornotify start")
 			msg = spade.message.Message()
-			msg.to = 'output@192.168.1.8'
+			msg.to = agentnames.output
 			msg.body = 'color error'
 			await self.send(msg)
 			msg = spade.message.Message()
-			msg.to = 'agent14@192.168.1.8'
+			msg.to = agentnames.agent14
 			msg.body = 'color error'
 			await self.send(msg)
+			await self.logInfo("agent14::invalidcolornotify end")
+		
 		async def validColorNotify(self):
+			await self.logInfo("agent14::validcolornotify start")
 			msg = spade.message.Message()
-			msg.to = 'agent14@192.168.1.8'
+			msg.to = agentnames.agent14
 			msg.body = 'scan sort/build'
 			await self.send(msg)
+			await self.logInfo("agent14::validcolornotify start")
 
 		async def waitValidColor(self):
-			while self.agent.port.colorSensorEV3() not in valid_colors:
-				time.sleep(0.2)
+			await self.logInfo("agent14::waitvalidcolor start")
+			while (True):
+				measuredColor = await self.agent.measureColor()
+				if measuredColor in valid_colors:
+					break
+				await self.agent.sleep(0.5)
 			await self.validColorNotify()
+			await self.logInfo("agent14::waitvalidcolor end")
 
 		async def sortGetBucketType(self):
-			value = self.agent.port.colorSensorEV3()
+			await self.logInfo("agent14::sortGetBucketType start")
+			value = await self.agent.measureColor()
 			if value == self.agent.buckets[0]:
 				value = 0
 				pass # Broadcast sort bucket1
@@ -86,49 +105,52 @@ class SensorAgent14(SensorAgent):
 				value = 2
 				pass # Broadcast sort bucket3
 			else:
+				await self.logError("Encountered sort color error")
 				message = spade.message.Message()
-				message.to = 'output@192.168.1.8'
+				message.to = agentnames.output
 				message.body = 'sort color error'
 				await self.send(message)
-				time.sleep(3) # Sleep so error message has time to appear
+				await self.agent.sleep(3) # Sleep so error message has time to appear
 				# Not much point immediately replacing it with the menu
 				message = spade.message.Message()
-				message.to = 'agent11@192.168.1.8'
-				message.body = 'next brick'
+				message.to = agentnames.agent11
+				message.body = 'ready'
 				await self.send(message)
 				message = spade.message.Message()
-				message.to = 'output@192.168.1.8'
-				message.body = 'next brick'
+				message.to = agentnames.output
+				message.body = 'ready'
 				await self.send(message)
 				return
 			message = spade.message.Message()
 			message.metadata = {"parameter": "sort"}
 			message.thread = "1"
-			message.to = "agent1B@192.168.1.8"
-			message.body = str(value)
+			message.to = agentnames.agent1B
+			message.body = f"{value}"
 			await self.send(message)
+			await self.logInfo("agent14::sortGetbuckettype end")
 
 		async def checkAnyBrickArrival(self):
-			if self.agent.port.colorSensorEV3() in any_brick:
-				pass # Broadcast arrival
+			await self.logInfo("agent14::checkAnyBrickArrival start")
+			measuredColor = await self.agent.measureColor()
+			if measuredColor in any_brick:
 				msg = spade.message.Message()
-				msg.to = "agent1C@192.168.1.8"
+				msg.to = agentnames.agent1C
 				msg.body = "brick arrived"
 				await self.send(msg)
 				msg = spade.message.Message()
-				msg.to = "agent1B@192.168.1.8"
+				msg.to = agentnames.agent1B
 				msg.body = "brick arrived"
 				await self.send(msg)
-				time.sleep(0.2)
 				msg = spade.message.Message()
-				msg.to = "agent14@192.168.1.8"
+				msg.to = agentnames.agent14
 				msg.body = "check color"
 				await self.send(msg)
 			else:
 				msg = spade.message.Message()
-				msg.to = "agent13@192.168.1.8"
+				msg.to = agentnames.agent13
 				msg.body = 'proximity check'
 				await self.send(msg)
+			await self.logInfo("agent14::checkAnyBrickArrival end")
 
 	def __init__(self, *args, **kwargs):
 		super().__init__(*args, **kwargs)
@@ -138,4 +160,4 @@ class SensorAgent14(SensorAgent):
 		self.build = defaults[3]
 
 def createAgent14():
-	return SensorAgent14("agent14@192.168.1.8", "agent14")
+	return SensorAgent14(agentnames.agent14, "agent14")

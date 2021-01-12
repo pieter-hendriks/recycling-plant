@@ -1,6 +1,9 @@
 from MotorAgent import MotorAgent
 import spade
 from MyBehaviour import CyclicBehaviour, OneShotBehaviour
+import time
+import agentnames
+
 class MotorAgent1B(MotorAgent):
 	class Behaviour(CyclicBehaviour):
 		def __init__(self, *args, **kwargs):
@@ -22,51 +25,78 @@ class MotorAgent1B(MotorAgent):
 			self.templates[-1][0].metadata = {"parameter": "sort"}
 			self.templates[-1][0].thread = "1"
 			self.createMasterTemplate()
-
+			self.turnOffRotation = 0
 			self.buildCount = 0
-
+			self.firstStuckCall = True
 		async def shred(self):
+			await self.logInfo("Agent1B::shred -> resetRotation & setSpeed(10)")
 			self.agent.resetRotation()
-			self.agent.port.setSpeed(10)
+			await self.agent.runDegs(790, -30)
 
 		async def brickStuck(self):
-			if (self.agent.readRotation() > 1200):
-				self.agent.port.runSecs(secs=1, speed=-20, brakeOnCompletion=True)
+			await self.logInfo("Agent1B::brickStuck start")
+			if not self.firstStuckCall:
+				print("brick stuck unstucking")
+				await self.agent.runDegs(100, 20)
 				self.agent.resetRotation()
-				self.agent.port.setSpeed(10)
+				await self.agent.runDegs(790, -30)
+			else:
+				self.firstStuckCall = False
+			previousRotation = self.agent.readRotation()
+			while (abs(self.agent.readRotation()) < 780):
+				print(f"brick stuck sleeping! Current: {self.agent.readRotation()}")
+				await self.agent.sleep(1)
+				if previousRotation == self.agent.readRotation():
+					msg = spade.message.Message()
+					msg.to = agentnames.error
+					msg.body = f'Something went wrong with the {self.agent.jid} rotation control.'
+					await self.send(msg)
+					await self.logInfo("Agent1B encountered a bit of a problem. Sleeping for ten seconds, will assume fixed after.")
+			# Wait with sending this message until the brick should actually be there.
+			await self.agent.sleep(2)
 			msg = spade.message.Message()
-			msg.to = 'agent14@192.168.1.8'
+			msg.to = agentnames.agent14
 			msg.body = 'no stuck brick'
 			await self.send(msg)
+			await self.logInfo("Agent1B::brickStuck end")
 
 		async def brickArrival(self):
+			await self.logInfo("Agent1B::brickArrival -> float()")
 			self.agent.port.float()
+			self.firstStuckCall = True # We go past that stage, so fix the variable for next time
 
 		async def barrierOn(self):
+			await self.logInfo("Agent1B::barrierOn -> float()")
+			self.turnOffRotation = self.agent.readRotation()
 			self.agent.port.float()
 		
 		async def barrierOff(self):
-			self.agent.port.setSpeed(10)
+			await self.logInfo("Agent1B::barrierOff -> setSpeed(10)")
+			await self.agent.runDegs(780 - self.turnOffRotation, -30)
+			self.turnOffRotation = 0
 
 		async def build(self):
-			self.agent.port.runDegs(degs=1600, speed=30, brakeOnCompletion=False)
+			await self.logInfo("Agent1B::build start")
+			await self.agent.runDegs(degs=1800, speed=-30, brakeOnCompletion=False)
 			self.buildCount += 1
 			msg = spade.message.Message()
 			msg.body = str(self.buildCount)
 			msg.metadata = {"parameter": "press"}
 			msg.thread = "1"
-			msg.to = 'agent2D@192.168.1.8'
+			msg.to = agentnames.agent2D
 			await self.send(msg)
-
 			self.buildCount %= 2
+			await self.logInfo("Agent1B::build end")
 
 		async def sort(self, bucketIndex):
-			degValues = {0: 390, 1: 630, 2: 870}
-			self.agent.port.runDegs(degs=degValues[bucketIndex], speed=20, brakeOnCompletion=True)
+			await self.logInfo("Agent1B::sort start")
+			degValues = {0: 400, 1: 600, 2: 850}
+			await self.agent.runDegs(degs=degValues[bucketIndex], speed=-30, brakeOnCompletion=True)
 			msg = spade.message.Message()
 			msg.body = 'brick sorted'
-			msg.to = 'agent2C@192.168.1.8'
+			msg.to = agentnames.agent2C
 			await self.send(msg)
+			await self.logInfo("Agent1B::sort end")
 
 	def __init__(self, *args, **kwargs):
 		super().__init__(*args, **kwargs)
@@ -76,4 +106,4 @@ class MotorAgent1B(MotorAgent):
 	
 
 def createAgent1B():
-	return MotorAgent1B("agent1B@192.168.1.8", "agent1B")
+	return MotorAgent1B(agentnames.agent1B, "agent1B")

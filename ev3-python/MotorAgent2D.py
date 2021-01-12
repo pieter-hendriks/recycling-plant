@@ -2,27 +2,31 @@ from MotorAgent import MotorAgent
 import time
 from MyBehaviour import OneShotBehaviour, CyclicBehaviour
 import spade 
+import agentnames
+
 class MotorAgent2D(MotorAgent):
 	class Behaviour_start(OneShotBehaviour):
 		async def run(self): # R_PRS
-			self.agent.port.runSecs(speed=-2.5, secs=0.3, brakeOnCompletion=True)
-			self.agent.port.setSpeed(8)
-			time.sleep(1)
-			self.agent.port.waitUntilNotBusy()
-			self.agent.port.brake()
-			self.agent.port.waitUntilNotBusy()
+			await self.agent.sleep(10) # Wait for other agents to finish setup/clear prod line
+			# 2C most importantly needs to clear the press surface!
+			print("Agent2D run start")
+			await self.logInfo("agent2D::run start")
+			print("Agent2D info logged")
+			self.agent.port.setSpeed(-10)
+			await self.agent.sleep(0.1)
+			await self.agent.runSecs(speed=-70, secs=1, brakeOnCompletion=True)
+			await self.agent.sleep(0.1)
 			self.agent.resetRotation()
-			self.agent.port.float()
 			# Send messages signalling end of this routine
-			time.sleep(2)
 			msg = spade.message.Message()
-			msg.to = "output@192.168.1.8"
+			msg.to = agentnames.output
 			msg.body = "ready"
 			await self.send(msg)
 			msg = spade.message.Message()
-			msg.to = "agent11@192.168.1.8"
+			msg.to = agentnames.agent11
 			msg.body = "ready"
 			await self.send(msg)
+			await self.logInfo("agent2D::run end")
 
 
 
@@ -36,37 +40,45 @@ class MotorAgent2D(MotorAgent):
 			self.createMasterTemplate()
 		
 		async def press(self, count):
+			await self.logInfo("agent2D::Press start")
+			# We get message when agent1b is done rotating, but the brick might not
+			# Have finished moving yet, so wait a bit
+			# Then move and press down
+			await self.agent.sleep(3)
 			for _ in range(count):
-				self.agent.port.runSecs(secs=1, speed=-50, brakeOnCompletion=False)
+				await self.agent.runSecs(secs=1, speed=50, brakeOnCompletion=False)
+				self.agent.port.setSpeed(-8)
+				await self.agent.sleep(0.1)
 				degs = -50 - self.agent.readRotation()
-				self.agent.port.runDegs(degs=degs, speed=20, brakeOnCompletion=True)
+				await self.agent.runDegs(degs=degs, speed=-20, brakeOnCompletion=True)
 			degs = -20 - self.agent.readRotation()
-			self.agent.port.runDegs(degs=degs, speed=20, brakeOnCompletion=True)
-			time.sleep(0.2)
-			self.agent.port.hold()
+			await self.agent.runDegs(degs=degs, speed=-20, brakeOnCompletion=True)
+			await self.agent.sleep(0.2)
+			self.agent.port.float()
 			if count == 1:
 				msg = spade.message.Message()
-				msg.to = 'output@192.168.1.8'
-				msg.body = 'next brick'
+				msg.to = agentnames.output
+				msg.body = 'ready'
 				await self.send(msg)
 				msg = spade.message.Message()
-				msg.to = 'agent11@192.168.1.8'
-				msg.body = 'next brick'
+				msg.to = agentnames.agent11
+				msg.body = 'ready'
 				await self.send(msg)
 			elif count == 2:
 				msg = spade.message.Message()
-				msg.to = 'output@192.168.1.8'
+				msg.to = agentnames.output
 				msg.body = 'eject'
 				await self.send(msg)
 				msg = spade.message.Message()
-				msg.to = 'agent2B@192.168.1.8'
+				msg.to = agentnames.agent2B
 				msg.body = 'eject'
 				await self.send(msg)
 			else:
 				msg = spade.message.Message()
-				msg.to = "agent2D@192.168.1.8"
+				msg.to = agentnames.agent2D
 				msg.body = f"Count invalid value in press: {count}"
-				self.logError(msg)
+				await self.logError(msg)
+			await self.logInfo("agent2D::Press end")
 
 	def __init__(self, *args, **kwargs):
 		# Forward all arguments to super since we don't really use any ourselves.
@@ -78,4 +90,4 @@ class MotorAgent2D(MotorAgent):
 
 
 def createAgent2D():
-	return MotorAgent2D("agent2D@192.168.1.8", "agent2D")
+	return MotorAgent2D(agentnames.agent2D, "agent2D")

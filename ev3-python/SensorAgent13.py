@@ -2,7 +2,8 @@ from SensorAgent import SensorAgent
 import time
 from MyBehaviour import CyclicBehaviour
 import spade
-
+from PiStorms import PiStormsSensor
+import agentnames
 class SensorAgent13(SensorAgent):
 	class Behaviour(CyclicBehaviour):
 		def __init__(self, *args, **kwargs):
@@ -14,51 +15,61 @@ class SensorAgent13(SensorAgent):
 			self.createMasterTemplate()
 
 		async def checkBarrier(self):
-			if self.agent.port.distanceUSEV3() < 20:
+			await self.logInfo("agent13::checkBarrier start")
+			distance = await self.agent.measureDistance() 
+			if distance < 200: # 20cm
+				await self.logInfo("agent13::checkBarrier proximity alert")
 				msg = spade.message.Message()
-				msg.to = "output@192.168.1.8"
+				msg.to = agentnames.output
 				msg.body = "proximity alert"
 				await self.send(msg)
 				msg = spade.message.Message()
-				msg.to = "agent13@192.168.1.8"
+				msg.to = agentnames.agent13
 				msg.body = "proximity alert"
 				await self.send(msg)
 				msg = spade.message.Message()
-				msg.to = "agent1B@192.168.1.8"
+				msg.to = agentnames.agent1B
 				msg.body = "proximity alert"
 				await self.send(msg)
 				msg = spade.message.Message()
-				msg.to = "agent1C@192.168.1.8"
+				msg.to = agentnames.agent1C
 				msg.body = "proximity alert"
 				await self.send(msg)
 			else: 
+				await self.logInfo("agent13::checkBarrier area clear")
 				msg = spade.message.Message()
 				msg.body = 'maybe stuck'
-				msg.to = "agent1B@192.168.1.8"
+				msg.to = agentnames.agent1B
 				await self.send(msg)
 				# Broadcast all-clear
-				pass
+			await self.logInfo("agent13::checkBarrier end")
 			
 		async def checkBarrierStop(self):
-			while (self.agent.port.distanceUSEV3() <= 30):
-				time.sleep(0.2)
+			await self.logInfo("agent13::checkBarrierStop start")
+			while (True):
+				distance = await self.agent.measureDistance()
+				if distance > 300: 
+					break
+				await self.agent.sleep(2)
+			await self.logInfo("agent13::checkBarrierStop area clear")
 			msg = spade.message.Message()
 			msg.body = 'area clear'
-			msg.to = 'agent1B@192.168.1.8'
+			msg.to = agentnames.agent1B
 			await self.send(msg)
 			msg = spade.message.Message()
 			msg.body = 'area clear'
-			msg.to = 'agent1C@192.168.1.8'
+			msg.to = agentnames.agent1C
 			await self.send(msg)
 			msg = spade.message.Message()
 			msg.body = 'area clear'
-			msg.to = 'output@192.168.1.8'
+			msg.to = agentnames.output
 			await self.send(msg)
-			time.sleep(1)
+			await self.agent.sleep(1)
 			msg = spade.message.Message()
 			msg.body = 'maybe stuck'
-			msg.to = "agent1B@192.168.1.8"
+			msg.to = agentnames.agent1B
 			await self.send(msg)
+			await self.logInfo("agent13::checkBarrierStop end")
 
 	def __init__(self, *args, **kwargs):
 		super().__init__(*args, **kwargs)
@@ -68,4 +79,4 @@ class SensorAgent13(SensorAgent):
 
 
 def createAgent13():
-	return SensorAgent13("agent13@192.168.1.8", "agent13")
+	return SensorAgent13(agentnames.agent13, "agent13")

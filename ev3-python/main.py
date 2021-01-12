@@ -1,28 +1,54 @@
-# from PiStorms import PiStorms
-# from spade import agent
-# from spade import quit_spade
-# import time
-
-# class DummyAgent(agent.Agent):
-#     async def setup(self):
-#         print("Hello World! I'm agent {}".format(str(self.jid)))
-#         psm = PiStorms()
-#         psm.screen.termPrintln("EV3 Motor and US Sensor test")
-#         psm.BAM1.runDegs(360, 75, True, False)
-#         dist = psm.BAS1.distanceUSEV3()
-#         print(dist)
-#         psm.screen.clearScreen()
-#         psm.screen.drawAutoText(str(dist), 35, 200, fill=(255, 255, 255), size = 18)
-			
-# dummy = DummyAgent("challenger@jabber.de", "123456")
-# dummy.start()
-# time.sleep(10)
-# dummy.stop()
-# quit_spade()
-
-
-import PiStorms
-import spade
+import multiprocessing as mp
 import time
+import signal
+import sys
+import asyncio
 
+def sigterm_handler(_signo, _stack_frame):
+	sys.exit(0)
 
+async def startFn(agentfn):
+	signal.signal(signal.SIGTERM, sigterm_handler)
+	try:
+		agent = agentfn()
+		ret = agent.start()
+		if asyncio.iscoroutine(ret):
+			await ret
+		else:
+			ret.result()
+		while (True):
+			time.sleep(60)
+	finally:
+		print("Endless loop end. Stopping agent.")
+		ret = agent.stop()
+		if asyncio.iscoroutine(ret):
+			await ret
+		else:
+			ret.result()
+
+async def child_main():
+	try: 
+		while (True):
+			time.sleep(2)
+	except KeyboardInterrupt:
+		sys.exit(0)
+
+def syncStartFn(agentfn):
+	asyncio.run(startFn(agentfn))
+
+async def main(agentFunctions):
+	processes = []
+	for agentFn in agentFunctions:
+		processes.append(mp.Process(target=syncStartFn, args=(agentFn,)))
+		processes[-1].start()
+
+	try:
+		while (True):
+			time.sleep(2)
+	except KeyboardInterrupt:
+		for process in processes:
+			process.terminate()
+		for process in processes:
+			process.join()
+
+	

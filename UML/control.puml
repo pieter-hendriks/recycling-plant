@@ -1,0 +1,14 @@
+@startuml
+
+User -> ControlAgent : Command
+activate ControlAgent
+alt valid_command
+	ControlAgent -> Agent : Command 
+	activate Agent 
+	Agent -> Agent : perform operation
+	Agent -> ControlOutputAgent : log information
+	deactivate Agent
+end
+deactivate ControlAgent
+
+@enduml

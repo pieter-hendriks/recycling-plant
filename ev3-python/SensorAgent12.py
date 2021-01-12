@@ -2,6 +2,7 @@ from SensorAgent import SensorAgent, valid_colors
 from MyBehaviour import CyclicBehaviour
 import spade
 import time
+import agentnames
 
 class SensorAgent12(SensorAgent):
 	class Behaviour(CyclicBehaviour):
@@ -12,24 +13,31 @@ class SensorAgent12(SensorAgent):
 			self.createMasterTemplate()
 
 		async def checkBrickDrop(self):
-			print("checkbrickdrop started!")
-			self.logInfo(f"checkBrickDrop started:\nvalid colors = {valid_colors}\ncolor={self.agent.port.colorSensorEV3()}")
-			if self.agent.port.colorSensorEV3() in valid_colors:
+			await self.logInfo("agent12::checkBrickDrop start")
+			scanColor = await self.agent.measureColor()
+			
+			await self.logInfo(f"agent12::checkBrickDrop:\nvalid colors = {valid_colors}\ncolor={scanColor}")
+			if scanColor in valid_colors:
 				msg = spade.message.Message()
-				msg.to = 'agent1A@192.168.1.8'
+				msg.to = agentnames.agent1A
 				msg.body = 'brick ready'
 				await self.send(msg)
 			else:
-				self.logInfo(f"Expected brick in {valid_colors}. Actually scanned color = {self.agent.port.colorSensorEV3()}")
+				await self.logInfo(f"Expected brick in {valid_colors}. Actually scanned color = {scanColor}")
 				msg = spade.message.Message()
-				msg.to = 'output@192.168.1.8'
+				msg.to = agentnames.output
 				msg.body = 'incorrect brick'
 				await self.send(msg)
-				time.sleep(1)
+				await self.agent.sleep(1)
 				msg = spade.message.Message()
-				msg.to = 'agent11@192.168.1.8'
+				msg.to = agentnames.agent11
 				msg.body = 'ready'
 				await self.send(msg)
+				msg = spade.message.Message()
+				msg.to = agentnames.output
+				msg.body = 'ready'
+				await self.send(msg)
+			await self.logInfo("agent12::checkBrickDrop end")
 
 		
 	def __init__(self, *args, **kwargs):
@@ -38,4 +46,4 @@ class SensorAgent12(SensorAgent):
 		self.add_behaviour(self.Behaviour())
 
 def createAgent12():
-	return SensorAgent12("agent12@192.168.1.8", "agent12")
+	return SensorAgent12(agentnames.agent12, "agent12")
